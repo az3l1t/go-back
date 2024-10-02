@@ -1,0 +1,8 @@
+database:
+  user: "postgres"
+  password: "Chemege1."
+  name: "postgres"
+  host: "db"
+  port: 5432
+
+jwt_secret: "Rt6cTmwulXrFlN0RpNBJ775XhivC4DatjHMTKWA99SbdJw6bK89RxBGkzUUoBWorje0U6BFLOSfsyt9I6AOuBNLi9Bx3vG6pIAGA6S8F0wZAjX/CrUjXMq39epBoARqF+F35wHRdDyUB8izLy5gppWNEd2UdR5HdhLZTSdGCvWC3vYDGMPP447Xbyb0qRXnBYXRxCyH5XXTBIJIlbSlEQw91oKnkHfcfVPH6MY5Y0hXOCbs0nUz0fieF/KJ/8GnlLEWgVLeWUnUL4fOn3ghgwa10CacdvEiHOcH9ZfcgbHRXoFSn55zcxOszhFD2C26LIBFD3Wa35nRMjkk89QRpJaf4qqWBudISHFNEJ9/UPl8="
