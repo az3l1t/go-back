@@ -5,7 +5,7 @@ git clone https://github.com/az3l1t/go-back.git
 ```
 
 ```
-cd delivery
+cd go-back
 ```
 
 ```
