@@ -52,18 +52,10 @@ func (uc *UserController) Register(c *gin.Context) {
 
 	user := models.User{
 		Username:  userReq.Username,
-		Password:  userReq.Password, // Здесь лучше будет хэшировать пароль перед сохранением
+		Password:  userReq.Password,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-
-	// Хеширование пароля
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Could not hash password"})
-		return
-	}
-	user.Password = string(hashedPassword)
 
 	if err := uc.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
@@ -100,12 +92,12 @@ func (uc *UserController) Login(c *gin.Context) {
 	}
 
 	if err := uc.DB.Where("username = ?", userReq.Username).First(&foundUser).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid username or password"})
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid username"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(userReq.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid username or password"})
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid password"})
 		return
 	}
 
