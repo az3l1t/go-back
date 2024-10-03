@@ -1,0 +1,48 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  GO_VERSION: "1.22.5"
+  APP_NAME: "go-back"
+
+cache:
+  paths:
+    - go/pkg
+    - go/bin
+
+build:
+  stage: build
+  image: golang:${GO_VERSION}
+  before_script:
+    - apt-get update && apt-get install -y make
+  script:
+    - echo "Building the Go application with make..."
+    - make build
+  artifacts:
+    paths:
+      - $APP_NAME
+
+test:
+  stage: test
+  image: golang:${GO_VERSION}
+  before_script:
+    - apt-get update && apt-get install -y make
+  script:
+    - echo "Running tests with make..."
+    - make test
+  allow_failure: false
+
+docker_build:
+  stage: deploy
+  image: docker:24.0.0
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+  script:
+    - echo "Building and pushing Docker image with make..."
+    - make docker-up
+  only:
+    - main
