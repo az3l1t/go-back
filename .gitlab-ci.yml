@@ -43,6 +43,6 @@ docker_build:
     - docker info
   script:
     - echo "Building and pushing Docker image with make..."
-    - make docker-up
+    - make docker
   only:
     - main
