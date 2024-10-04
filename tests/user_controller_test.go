@@ -1,14 +1,14 @@
 package tests
 
 import (
+	"bytes"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
-
+	"go-booking-app/controllers"
 	"go-booking-app/models"
 	"go-booking-app/routes"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -16,65 +16,73 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupTestRouter(db *gorm.DB) *gin.Engine {
-	return routes.SetupRouter(db)
+var db *gorm.DB
+var router *gin.Engine
+
+func TestMain(m *testing.M) {
+	var err error
+	db, err = gorm.Open("postgres", "host=localhost port=5432 user=postgres password=Chemege1. dbname=postgres sslmode=disable")
+	if err != nil {
+		panic("failed to connect database: " + err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&models.User{}, &models.Booking{})
+
+	router = routes.SetupRouter(db)
+
+	m.Run()
+
+	CleanupDB()
 }
 
-func setupTestDB() (*gorm.DB, error) {
-	db, err := gorm.Open("postgres", "host=localhost port=5433 user=postgres dbname=test_db password=Chemege1. sslmode=disable")
-	if err != nil {
-		return nil, err
-	}
-
+// Функция для очистки данных после каждого теста
+func CleanupDB() {
 	db.Exec("DELETE FROM users")
-	db.AutoMigrate(&models.User{}, &models.Booking{})
-	return db, nil
+	db.Exec("DELETE FROM bookings")
 }
 
 func TestRegisterUser(t *testing.T) {
-	db, err := setupTestDB()
-	assert.NoError(t, err)
-	defer db.Close()
+	user := controllers.UserRequest{
+		Username: "testuser",
+		Password: "testpassword",
+	}
+	jsonValue, _ := json.Marshal(user)
 
-	router := setupTestRouter(db)
-
-	w := httptest.NewRecorder()
-	reqBody := `{"username": "testuser1", "password": "password"}`
-	req, _ := http.NewRequest("POST", "/register", strings.NewReader(reqBody))
+	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
 
+	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
-	assert.Equal(t, "testuser1", response["username"])
+	var response controllers.UserResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.Nil(t, err)
+	assert.Equal(t, "testuser", response.Username)
 }
 
 func TestLoginUser(t *testing.T) {
-	db, err := setupTestDB()
-	assert.NoError(t, err)
-	defer db.Close()
-
-	router := setupTestRouter(db)
-
-	user := models.User{
-		Username: "testuser1",
-		Password: "password",
+	user := controllers.UserRequest{
+		Username: "testlogin",
+		Password: "testpassword",
 	}
-	db.Create(&user)
-
-	w := httptest.NewRecorder()
-	reqBody := `{"username": "testuser1", "password": "password"}`
-	req, _ := http.NewRequest("POST", "/login", strings.NewReader(reqBody))
+	jsonValue, _ := json.Marshal(user)
+	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
 
+	req, _ = http.NewRequest("POST", "/login", bytes.NewBuffer(jsonValue))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NotEmpty(t, response["token"])
+	var tokenResponse controllers.TokenResponse
+	err := json.Unmarshal(w.Body.Bytes(), &tokenResponse)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, tokenResponse.Token)
 }

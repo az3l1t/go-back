@@ -10,7 +10,22 @@ cd go-back
 
 run with docker
 ```
-make docker-up
+make docker
+```
+
+tests
+```
+make test
+```
+
+down with docker
+```
+make docker-down
+```
+
+build
+```
+make build
 ```
 Swagger:
 http://localhost:8080/swagger/index.html
